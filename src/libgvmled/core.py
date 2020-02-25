@@ -21,17 +21,17 @@ PRM_POWER_ON = 1
 PRM_POWER_OFF = 0
 
 
-class GVMManager(object):
+class GVMLamp(object):
     def __init__(
             self,
             channel,
             gvm_type=GVM_RGB_LED_TYPE,
             destination_ip='255.255.255.255',
             destination_port=2525,
-            sleep=1,
+            sleep=2,
             verbose=False,
             *args, **kwargs):
-        super(GVMManager, self).__init__(*args, **kwargs)
+        super(GVMLamp, self).__init__(*args, **kwargs)
         self.channel = channel
         self.gvm_type = gvm_type
         self.led_endpoint = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -73,13 +73,24 @@ class GVMManager(object):
         self.send_message(CMD_POWER, PRM_POWER_ON)
 
     def set_brightness(self, level):
-        self.send_message(CMD_BRIGHTNESS, level % 100)
+        self.send_message(CMD_BRIGHTNESS, level % 101)
 
     def set_cct(self, level):
-        self.send_message(CMD_CCT, level % 100)
+        self.send_message(CMD_CCT, level % 101)
 
     def set_hue(self, hue):
         self.send_message(CMD_HUE, hue % 84)
 
     def set_saturation(self, level):
-        self.send_message(CMD_SATURATION, level % 100)
+        self.send_message(CMD_SATURATION, level % 101)
+
+    def do_hue_cycle(self, exit_func=lambda x: False):
+        self.set_brightness(50)
+        self.set_saturation(100)
+
+        i = 0
+        while exit_func(self) is False:
+            self.set_hue(i)
+            i += 1
+            if i == 84:
+                i = 0
